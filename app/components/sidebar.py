@@ -1,5 +1,6 @@
 import reflex as rx
 from app.states.neurowatch_state import NeuroWatchState
+from app.states.auth_state import AuthState
 
 
 def nav_item(label: str, icon: str) -> rx.Component:
@@ -68,6 +69,12 @@ def sidebar() -> rx.Component:
                     class_name="flex flex-col",
                 ),
                 class_name="flex items-center gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100",
+            ),
+            rx.el.button(
+                rx.icon("log-out", class_name="h-4 w-4 mr-2"),
+                "Log Out",
+                on_click=AuthState.logout,
+                class_name="w-full mt-4 flex items-center justify-center py-2 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors",
             ),
             class_name="mt-auto pt-6 border-t border-gray-100",
         ),

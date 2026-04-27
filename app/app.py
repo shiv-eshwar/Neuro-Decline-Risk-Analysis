@@ -1,5 +1,6 @@
 import reflex as rx
 from app.states.neurowatch_state import NeuroWatchState
+from app.states.auth_state import AuthState
 from app.components.sidebar import sidebar
 from app.components.dashboard_cards import risk_gauge, domain_card
 from app.components.charts import trend_chart
@@ -7,6 +8,7 @@ from app.components.session_table import session_table
 from app.pages.session_detail import session_detail_page
 from app.components.new_session_modal import new_session_modal
 from app.pages.assessment import assessment_page
+from app.pages.auth import login_page, signup_page
 
 
 def layout(content: rx.Component, title: str) -> rx.Component:
@@ -362,14 +364,16 @@ app = rx.App(
         ),
     ],
 )
-app.add_page(index, route="/")
+app.add_page(index, route="/", on_load=AuthState.check_auth)
 app.add_page(
     session_detail_page,
     route="/session/[session_id]",
-    on_load=NeuroWatchState.load_session,
+    on_load=[AuthState.check_auth, NeuroWatchState.load_session],
 )
-app.add_page(assessment_page, route="/assessment")
-app.add_page(sessions_page, route="/sessions")
-app.add_page(trends_page, route="/trends")
-app.add_page(alerts_page, route="/alerts")
-app.add_page(settings_page, route="/settings")
+app.add_page(assessment_page, route="/assessment", on_load=AuthState.check_auth)
+app.add_page(sessions_page, route="/sessions", on_load=AuthState.check_auth)
+app.add_page(trends_page, route="/trends", on_load=AuthState.check_auth)
+app.add_page(alerts_page, route="/alerts", on_load=AuthState.check_auth)
+app.add_page(settings_page, route="/settings", on_load=AuthState.check_auth)
+app.add_page(login_page, route="/login", on_load=AuthState.check_not_auth)
+app.add_page(signup_page, route="/signup", on_load=AuthState.check_not_auth)
