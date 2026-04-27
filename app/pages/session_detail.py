@@ -66,11 +66,20 @@ def domain_panel(
 def session_detail_page() -> rx.Component:
     return rx.el.div(
         rx.el.div(
-            rx.el.button(
-                rx.icon("arrow-left", class_name="h-4 w-4 mr-2"),
-                "Back to Dashboard",
-                on_click=rx.redirect("/"),
-                class_name="text-sm text-gray-500 hover:text-teal-600 flex items-center mb-6 transition-colors",
+            rx.el.div(
+                rx.el.button(
+                    rx.icon("arrow-left", class_name="h-4 w-4 mr-2"),
+                    "Back to Dashboard",
+                    on_click=rx.redirect("/"),
+                    class_name="text-sm text-gray-500 hover:text-teal-600 flex items-center transition-colors",
+                ),
+                rx.el.button(
+                    rx.icon("file-text", class_name="h-4 w-4 mr-2"),
+                    "Download Clinical Report",
+                    on_click=NeuroWatchState.download_caregiver_report,
+                    class_name="text-sm bg-white border border-gray-200 px-4 py-2 rounded-xl font-semibold text-gray-700 hover:bg-gray-50 transition-all flex items-center shadow-sm",
+                ),
+                class_name="flex justify-between items-center mb-6",
             ),
             rx.el.div(
                 rx.el.div(

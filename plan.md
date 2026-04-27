@@ -8,28 +8,22 @@
 
 ---
 
-## Phase 1: Core Layout, Dashboard Overview & Data Models ✅
-- [x] Define state models and dashboard UI
-- [x] Populate with realistic sample data
-
-## Phase 2: Session Detail View & Analysis Engine ✅
-- [x] Session Detail page with metric panels
-- [x] Implement analysis engine (baseline comparison, domain scoring)
-
-## Phase 3: Trends, Alerts & Settings Pages ✅
-- [x] Multi-line trends charts
-- [x] Alerts history and settings page
-
-## Phase 4: In-App Interactive Assessment ✅
-- [x] Build `/assessment` route and Assessment Wizard Shell
-- [x] Implement Typing, Reaction, Memory, and Voice Tests
-- [x] Finalize assessment into session data and redirect
+## Phase 1-7: Core Application ✅
+- [x] Dashboard, Session Detail, Trends, Alerts, Settings, Interactive Assessment, Login/Signup, Data Export, Activity Heatmap.
 
 ---
 
-## Phase 5: Authentication System (Login & Signup) ✅
-- [x] Create `AuthState` to handle user authentication logic (login, signup, logout, route protection).
-- [x] Build `/login` page with clean, clinical design matching the app.
-- [x] Build `/signup` page for new user registration.
-- [x] Protect existing routes (`/`, `/assessment`, `/sessions`, etc.) by redirecting unauthenticated users to `/login`.
-- [x] Add a logout button to the sidebar.
+## Phase 8: NeuroBot Care Assistant (New Tab) ✅
+- [x] Build a new **Assistant** tab (`/assistant`).
+  - A sophisticated chat interface mimicking an AI health companion.
+  - Users can "ask" about their recent metrics.
+  - Simulated contextual responses (e.g., summarizing the latest memory decline or confirming stable typing speeds).
+  - UI: Message bubbles, input field, suggested prompt chips, typing indicators, "Enter" key submission.
+
+## Phase 9: Comprehensive Medical Profile (New Tab) ✅
+- [x] Build a new **Profile** tab (`/profile`).
+  - Move beyond basic settings to a full clinical view.
+  - **Medications List**: Active prescriptions with dosages and frequency.
+  - **Care Team**: Primary care physician, neurologist, emergency contacts.
+  - **Clinical Notes**: Historical context, initial diagnosis date, baseline establishment notes.
+  - UI: Clean, structured grid layout emphasizing medical rigor.

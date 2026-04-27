@@ -272,6 +272,8 @@ class NeuroWatchState(rx.State):
         "avatar_url": "https://api.dicebear.com/9.x/notionists/svg?seed=Eleanor",
     }
     selected_session_id: str = "12"
+    search_query: str = ""
+    filter_risk_level: str = "All"
     baselines: dict = INITIAL_BASELINES
     sessions: list[SessionData] = INITIAL_SESSIONS
     analysis_results: list[AnalysisResult] = INITIAL_ANALYSIS
@@ -348,7 +350,21 @@ class NeuroWatchState(rx.State):
                 else "None",
             }
             for i, s in enumerate(self.sessions)
-        ][::-1][:10]
+        ]
+
+    @rx.var
+    def filtered_sessions(self) -> list[dict[str, str | int]]:
+        data = self.table_data[::-1]
+        if self.search_query:
+            query = self.search_query.lower()
+            data = [
+                row
+                for row in data
+                if query in str(row["id"]).lower() or query in str(row["date"]).lower()
+            ]
+        if self.filter_risk_level != "All":
+            data = [row for row in data if row["level"] == self.filter_risk_level]
+        return data
 
     @rx.var
     def trend_chart_data(self) -> list[dict[str, str | int]]:
@@ -383,6 +399,38 @@ class NeuroWatchState(rx.State):
         return history[::-1]
 
     @rx.var
+    def total_sessions(self) -> int:
+        return len(self.sessions)
+
+    @rx.var
+    def current_streak(self) -> int:
+        return 7
+
+    @rx.var
+    def completion_rate(self) -> str:
+        return "92%"
+
+    @rx.var
+    def next_assessment_due(self) -> str:
+        return "Tomorrow"
+
+    @rx.var
+    def activity_heatmap(self) -> list[dict[str, str | int]]:
+        data: list[dict[str, str | int]] = []
+        today = datetime.now()
+        session_dates = {s["timestamp"] for s in self.sessions}
+        for i in range(83, -1, -1):
+            d = today - timedelta(days=i)
+            ds = d.strftime("%Y-%m-%d")
+            intensity = 0
+            if ds in session_dates:
+                intensity = random.randint(2, 4)
+            else:
+                intensity = random.choice([0, 0, 0, 1])
+            data.append({"date": ds, "intensity": intensity})
+        return data
+
+    @rx.var
     def strongest_signal_insight(self) -> str:
         scores = [
             res["domain_scores"]["Memory"]["score"]
@@ -400,6 +448,46 @@ class NeuroWatchState(rx.State):
     def view_session(self, session_id: str):
         self.selected_session_id = session_id
         return rx.redirect(f"/session/{session_id}")
+
+    @rx.event
+    def export_sessions_csv(self):
+        import io
+        import csv
+
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(
+            ["Session ID", "Date", "Risk Score", "Risk Level", "Strongest Signal"]
+        )
+        for row in self.table_data:
+            writer.writerow(
+                [row["num"], row["date"], row["score"], row["level"], row["signal"]]
+            )
+        csv_data = output.getvalue()
+        return rx.download(data=csv_data, filename="neurowatch_sessions_export.csv")
+
+    @rx.event
+    def download_caregiver_report(self):
+        res = self.selected_analysis
+        sd = self.selected_session_data
+        report = f"NEUROWATCH CLINICAL REPORT\n"
+        report += f"Patient: {self.user_profile['name']}\n"
+        report += f"Session ID: {res['session_id']}\n"
+        report += f"Date: {sd['timestamp']}\n"
+        report += f"----------------------------------\n"
+        report += (
+            f"Risk Profile: {res['risk_level']} (Score: {res['risk_score']}/100)\n\n"
+        )
+        report += f"Summary: {res['personalized_summary']}\n\n"
+        report += """Domain Flags:
+"""
+        for d_name, d_val in res["domain_scores"].items():
+            report += (
+                f"- {d_name}: {d_val['flags']} flags ({d_val['key_observation']})\n"
+            )
+        return rx.download(
+            data=report, filename=f"caregiver_report_{res['session_id']}.txt"
+        )
 
     @rx.event
     def load_session(self):

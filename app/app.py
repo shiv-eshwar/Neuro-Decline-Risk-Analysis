@@ -8,6 +8,9 @@ from app.components.session_table import session_table
 from app.pages.session_detail import session_detail_page
 from app.components.new_session_modal import new_session_modal
 from app.pages.assessment import assessment_page
+from app.pages.activity import activity_page
+from app.pages.assistant import assistant_page
+from app.pages.profile import profile_page
 from app.pages.auth import login_page, signup_page
 
 
@@ -39,7 +42,18 @@ def layout(content: rx.Component, title: str) -> rx.Component:
 def index() -> rx.Component:
     content = rx.el.div(
         rx.el.div(
-            risk_gauge(), trend_chart(), class_name="grid grid-cols-3 gap-6 mb-6"
+            rx.el.div(
+                rx.icon("flame", class_name="h-4 w-4 text-orange-500"),
+                rx.el.span(
+                    f"{NeuroWatchState.current_streak}-Day Streak! Next assessment due: {NeuroWatchState.next_assessment_due}.",
+                    class_name="text-sm font-semibold text-teal-800",
+                ),
+                class_name="flex items-center gap-2 bg-teal-50 px-4 py-2 rounded-xl mb-6 w-full border border-teal-100 shadow-sm",
+            ),
+            rx.el.div(
+                risk_gauge(), trend_chart(), class_name="grid grid-cols-3 gap-6 mb-6"
+            ),
+            class_name="flex flex-col",
         ),
         rx.el.div(
             rx.foreach(NeuroWatchState.domain_scores_list, domain_card),
@@ -54,14 +68,138 @@ def index() -> rx.Component:
 def sessions_page() -> rx.Component:
     return layout(
         rx.el.div(
-            rx.el.h2("Session Management", class_name="text-xl font-bold mb-4"),
-            rx.el.p(
-                "Coming Soon: Full session archive and raw data export.",
-                class_name="text-gray-500",
+            rx.el.div(
+                rx.el.div(
+                    rx.el.div(
+                        rx.icon(
+                            "search",
+                            class_name="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400",
+                        ),
+                        rx.el.input(
+                            placeholder="Search by date or ID...",
+                            on_change=NeuroWatchState.set_search_query.debounce(500),
+                            class_name="pl-10 pr-4 py-2 w-64 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all",
+                        ),
+                        class_name="relative",
+                    ),
+                    rx.el.div(
+                        rx.el.select(
+                            rx.el.option("All Risk Levels", value="All"),
+                            rx.el.option("Low", value="Low"),
+                            rx.el.option("Moderate", value="Moderate"),
+                            rx.el.option("Elevated", value="Elevated"),
+                            rx.el.option("High", value="High"),
+                            on_change=NeuroWatchState.set_filter_risk_level,
+                            class_name="appearance-none bg-white border border-gray-200 rounded-xl px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500",
+                        ),
+                        rx.icon(
+                            "chevron-down",
+                            class_name="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none",
+                        ),
+                        class_name="relative",
+                    ),
+                    class_name="flex gap-4 items-center",
+                ),
+                rx.el.button(
+                    rx.icon("download", class_name="h-4 w-4 mr-2"),
+                    "Export CSV",
+                    on_click=NeuroWatchState.export_sessions_csv,
+                    class_name="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors shadow-sm",
+                ),
+                class_name="flex justify-between items-center mb-6",
             ),
-            class_name="bg-white p-12 rounded-2xl border border-dashed border-gray-300 text-center",
+            rx.el.div(
+                rx.el.table(
+                    rx.el.thead(
+                        rx.el.tr(
+                            rx.el.th(
+                                "Session #",
+                                class_name="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase",
+                            ),
+                            rx.el.th(
+                                "Date",
+                                class_name="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase",
+                            ),
+                            rx.el.th(
+                                "Risk Level",
+                                class_name="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase",
+                            ),
+                            rx.el.th(
+                                "Score",
+                                class_name="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase",
+                            ),
+                            rx.el.th(
+                                "Flagged Domain",
+                                class_name="text-left py-3 px-4 text-xs font-semibold text-gray-500 uppercase",
+                            ),
+                            rx.el.th("", class_name="py-3 px-4"),
+                        ),
+                        class_name="border-b border-gray-100",
+                    ),
+                    rx.el.tbody(
+                        rx.foreach(
+                            NeuroWatchState.filtered_sessions,
+                            lambda row: rx.el.tr(
+                                rx.el.td(
+                                    f"#{row['num']}",
+                                    class_name="py-4 px-4 text-sm font-medium text-gray-900",
+                                ),
+                                rx.el.td(
+                                    row["date"],
+                                    class_name="py-4 px-4 text-sm text-gray-600",
+                                ),
+                                rx.el.td(
+                                    rx.el.span(
+                                        row["level"],
+                                        class_name=rx.match(
+                                            row["level"],
+                                            (
+                                                "Low",
+                                                "px-2 py-1 rounded-full text-xs font-semibold bg-green-50 text-green-600",
+                                            ),
+                                            (
+                                                "Moderate",
+                                                "px-2 py-1 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-600",
+                                            ),
+                                            (
+                                                "Elevated",
+                                                "px-2 py-1 rounded-full text-xs font-semibold bg-orange-50 text-orange-600",
+                                            ),
+                                            "px-2 py-1 rounded-full text-xs font-semibold bg-red-50 text-red-600",
+                                        ),
+                                    ),
+                                    class_name="py-4 px-4",
+                                ),
+                                rx.el.td(
+                                    row["score"].to_string(),
+                                    class_name="py-4 px-4 text-sm font-bold text-gray-900",
+                                ),
+                                rx.el.td(
+                                    row["signal"],
+                                    class_name="py-4 px-4 text-sm text-gray-600",
+                                ),
+                                rx.el.td(
+                                    rx.el.button(
+                                        rx.icon("eye", class_name="h-4 w-4 mr-2"),
+                                        "View",
+                                        on_click=lambda: NeuroWatchState.view_session(
+                                            row["id"].to_string()
+                                        ),
+                                        class_name="flex items-center text-xs font-bold text-teal-600 hover:text-teal-700",
+                                    ),
+                                    class_name="py-4 px-4 text-right",
+                                ),
+                                class_name="border-b border-gray-50 hover:bg-slate-50 transition-colors",
+                            ),
+                        )
+                    ),
+                    class_name="w-full table-auto",
+                ),
+                class_name="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden",
+            ),
+            class_name="flex flex-col",
         ),
-        "Sessions",
+        "Clinical Data Management",
     )
 
 
@@ -373,6 +511,9 @@ app.add_page(
 app.add_page(assessment_page, route="/assessment", on_load=AuthState.check_auth)
 app.add_page(sessions_page, route="/sessions", on_load=AuthState.check_auth)
 app.add_page(trends_page, route="/trends", on_load=AuthState.check_auth)
+app.add_page(activity_page, route="/activity", on_load=AuthState.check_auth)
+app.add_page(assistant_page, route="/assistant", on_load=AuthState.check_auth)
+app.add_page(profile_page, route="/profile", on_load=AuthState.check_auth)
 app.add_page(alerts_page, route="/alerts", on_load=AuthState.check_auth)
 app.add_page(settings_page, route="/settings", on_load=AuthState.check_auth)
 app.add_page(login_page, route="/login", on_load=AuthState.check_not_auth)
